@@ -15,4 +15,7 @@ pub mod token_example_2 {
     pub fn mint(ctx: Context<MintContext>, amount: u64) -> Result<()> {
         _mint(ctx, amount)
     }
+    pub fn transfer(ctx: Context<TransferContext>, amount: u64) -> Result<()> {
+        _transfer(ctx, amount)
+    }
 }

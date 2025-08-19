@@ -95,6 +95,49 @@ describe("token-example-2", () => {
             recipient.publicKey.toBase58(),
         );
     });
+
+    it("should transfer tokens to recipient2", async () => {
+        const senderAta = getAta(mintKeypair.publicKey, recipient.publicKey);
+        const recipient2Ata = getAta(mintKeypair.publicKey, recipient2.publicKey);
+    
+        const mintAmount = BigInt(100000);
+        const transferAmount = BigInt(50000);
+        const tx = await program.methods
+          .transfer(new anchor.BN(transferAmount))
+          .accounts({
+            sender: recipient.publicKey,
+            mint: mintKeypair.publicKey,
+            recipient: recipient2.publicKey,
+          })
+          .signers([recipient])
+          .rpc();
+    
+        await connection.confirmTransaction(tx, "confirmed");
+    
+        const mintInfo = await getMintInfo(mintKeypair.publicKey);
+        assert.equal(mintInfo.supply, BigInt(mintAmount.toString()));
+    
+        const senderTokenAccount = await getAccountInfo(senderAta);
+        const expectedSenderBalance = mintAmount - transferAmount;
+        assert.equal(
+          senderTokenAccount.amount,
+          BigInt(expectedSenderBalance.toString())
+        );
+    
+        const recipientTokenAccount = await getAccountInfo(recipient2Ata);
+        const withheldAmount = getTransferFeeAmount(
+          recipientTokenAccount
+        ).withheldAmount;
+        assert.equal(recipientTokenAccount.amount, transferAmount - withheldAmount);
+        assert.equal(
+          withheldAmount,
+          (transferAmount * BigInt(500)) / BigInt(10000)
+        );
+    
+        console.log("ACCOUNT STATE AFTER TRANSFER:");
+        await logBalance("Recipient 1", senderAta);
+        await logBalance("Recipient 2", recipient2Ata);
+      });
 });
 
 export async function airdrop(
@@ -124,4 +167,19 @@ function getAta(mint: PublicKey, owner: PublicKey) {
 
 function getAccountInfo(ata: PublicKey) {
     return getAccount(connection, ata, "confirmed", TOKEN_2022_PROGRAM_ID);
+}
+
+async function logBalance(name: String, ata: PublicKey) {
+    try {
+        const account = await getAccountInfo(ata);
+
+        const transferFeeAmount = getTransferFeeAmount(account);
+        console.log(`${name}:`);
+        console.log(`  Balance: ${account.amount}`);
+        console.log(
+          `  Withheld: ${transferFeeAmount?.withheldAmount || BigInt(0)}`
+        );
+    } catch (error) {
+        console.log(`${name}: Account not found (balance: 0)`);
+    }
 }

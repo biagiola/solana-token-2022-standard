@@ -2,7 +2,6 @@ use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token_2022::{mint_to, MintTo, Token2022}, token_interface::{Mint, TokenAccount}};
 
 pub fn _mint(ctx: Context<MintContext>, amount: u64) -> Result<()> {
-
     if amount == 0 {
         panic!("Invalid amount!");
     }
