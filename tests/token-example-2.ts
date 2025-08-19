@@ -137,7 +137,35 @@ describe("token-example-2", () => {
         console.log("ACCOUNT STATE AFTER TRANSFER:");
         await logBalance("Recipient 1", senderAta);
         await logBalance("Recipient 2", recipient2Ata);
-      });
+    });
+
+    it("should withdraw withheld tokens", async () => {
+        const recipient2Ata = getAta(mintKeypair.publicKey, recipient2.publicKey);
+        const creatorAta = getAta(mintKeypair.publicKey, creator.publicKey);
+
+        const tx = await program.methods
+            .withdraw()
+            .accounts({
+                creator: creator.publicKey,
+                mint: mintKeypair.publicKey,
+                from: recipient2.publicKey
+            })
+            .signers([creator])
+            .rpc();
+        await connection.confirmTransaction(tx, "confirmed");
+
+        const recipient2Account = await getAccountInfo(recipient2Ata);
+        const withheldAmount = getTransferFeeAmount(recipient2Account).withheldAmount;
+        assert.equal(withheldAmount, BigInt(0));
+
+        const creatorAccount = await getAccountInfo(creatorAta);
+        const expectedWithdrawnAmount = (BigInt(50000) * BigInt(500)) / BigInt(10000);
+        assert.equal(creatorAccount.amount, expectedWithdrawnAmount);
+
+        console.log("ACCOUNT STATE AFTER WITHDRAW:");
+        await logBalance("Creator", creatorAta);
+        await logBalance("Recipient 2", recipient2Ata);
+    });
 });
 
 export async function airdrop(

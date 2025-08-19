@@ -18,4 +18,7 @@ pub mod token_example_2 {
     pub fn transfer(ctx: Context<TransferContext>, amount: u64) -> Result<()> {
         _transfer(ctx, amount)
     }
+    pub fn withdraw(ctx: Context<WithdrawContext>) -> Result<()> {
+        _withdraw(ctx)
+    }
 }
