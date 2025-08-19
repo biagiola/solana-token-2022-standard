@@ -12,4 +12,7 @@ pub mod token_example_2 {
     pub fn initialize(ctx: Context<InitializeContext>, fee_bps: u16, max_fee: u64) -> Result<()> {
         _initialize(ctx, fee_bps, max_fee)
     }
+    pub fn mint(ctx: Context<MintContext>, amount: u64) -> Result<()> {
+        _mint(ctx, amount)
+    }
 }
